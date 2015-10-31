@@ -1,30 +1,22 @@
-unit MX.PEInfoGetter;
+unit MX.PEInfoRetriever;
 
 interface
 
 type
-  IPEInfoGetter = interface
-    ['{479C0D89-E33F-4619-BF45-69AD97F8E540}']
-    function GetFileHash(AFilePath, AHashName: string): string;
-    function GetFileSize(AFilePath: string): int64;
-    function GetShortVersionNum(AFilePath: string): string;
-    function GetFullVersionNum(AFilePath: string): string;
-  end;
-
-  TPEInfoGetter = class(TInterfacedObject, IPEInfoGetter)
-    function GetFileHash(AFilePath, AHashName: string): string;
-    function GetFileSize(AFilePath: string): int64;
-    function GetShortVersionNum(AFilePath: string): string;
-    function GetFullVersionNum(AFilePath: string): string;
+  TPEInfoRetriever = class
+    class function GetFileHash(AFilePath, AHashName: string): string;
+    class function GetFileSize(AFilePath: string): int64;
+    class function GetShortVersionNum(AFilePath: string): string;
+    class function GetFullVersionNum(AFilePath: string): string;
   end;
 
 implementation
 
 uses System.SysUtils, System.Hash, System.IOUtils, Winapi.Windows;
 
-{ TPEInfoGetter }
+{ TPEInfoRetriever }
 
-function TPEInfoGetter.GetFileHash(AFilePath, AHashName: string): string;
+class function TPEInfoRetriever.GetFileHash(AFilePath, AHashName: string): string;
 var
   HashMD5: THashMD5;
   HashSHA1: THashSHA1;
@@ -60,7 +52,7 @@ begin
     raise Exception.Create('Unknown AHashName: ' + AHashName);
 end;
 
-function TPEInfoGetter.GetFileSize(AFilePath: string): int64;
+class function TPEInfoRetriever.GetFileSize(AFilePath: string): int64;
 var
   info: TWin32FileAttributeData;
 begin
@@ -72,7 +64,7 @@ begin
   Result := int64(info.nFileSizeLow) or int64(info.nFileSizeHigh shl 32);
 end;
 
-function TPEInfoGetter.GetFullVersionNum(AFilePath: string): string;
+class function TPEInfoRetriever.GetFullVersionNum(AFilePath: string): string;
 var
   Size, Handle: DWORD;
   Buffer: TBytes;
@@ -93,7 +85,7 @@ begin
     LongRec(FixedPtr.dwFileVersionLS).Lo]) // build
 end;
 
-function TPEInfoGetter.GetShortVersionNum(AFilePath: string): string;
+class function TPEInfoRetriever.GetShortVersionNum(AFilePath: string): string;
 var
   Rec: LongRec;
 begin
