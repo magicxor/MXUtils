@@ -6,8 +6,8 @@ uses
   System.SysUtils, System.Classes;
 
 type
-  TLogDestinations = (ldFile, ldStrings, ldWinDebugOut, ldConsole, ldEventLog, ldNull);
-  TNonInstantiatableDestinations = ldWinDebugOut .. ldEventLog;
+  TLogDestinations = (ldNull, ldWinDebugOut, ldConsole, ldEventLog, ldFile, ldStrings);
+  TNonInstantiatableDestinations = ldNull .. ldEventLog;
 
   TLogMsgLevel = (lmlFatal, lmlError, lmlWarn, lmlInfo, lmlDebug);
 
