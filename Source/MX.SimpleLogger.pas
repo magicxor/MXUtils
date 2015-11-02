@@ -105,14 +105,14 @@ constructor TSimpleLogger.Create(ALoggerEnabled: boolean; ALogDetailLevel: TLogM
   ALogStrings: TStrings);
 begin
   FLDStrings := ALogStrings;
-  Create(ALoggerEnabled, ALogDetailLevel, ldStrings);
+  CreateWithAnyDest(ALoggerEnabled, ALogDetailLevel, ldStrings);
 end;
 
 constructor TSimpleLogger.Create(ALoggerEnabled: boolean; ALogDetailLevel: TLogMsgLevel;
   ALogFilePath: string);
 begin
   AssignFile(FLDFile, ALogFilePath);
-  Create(ALoggerEnabled, ALogDetailLevel, ldFile);
+  CreateWithAnyDest(ALoggerEnabled, ALogDetailLevel, ldFile);
 end;
 
 procedure TSimpleLogger.Fatal(const msg: string);
