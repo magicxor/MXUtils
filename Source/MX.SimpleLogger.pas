@@ -48,7 +48,7 @@ type
     function LogLevelToString(ALogMsgLevel: TLogMsgLevel): string;
     function LogLevelToEventLogConst(ALogMsgLevel: TLogMsgLevel): integer;
 
-    constructor Create(ALoggerEnabled: boolean; ALogDetailLevel: TLogMsgLevel;
+    constructor CreateWithAnyDest(ALoggerEnabled: boolean; ALogDetailLevel: TLogMsgLevel;
       ALogDestination: TLogDestinations); overload;
   public
     procedure Fatal(const msg: string); overload;
@@ -85,7 +85,7 @@ uses
 
 { TSimpleLogger }
 
-constructor TSimpleLogger.Create(ALoggerEnabled: boolean; ALogDetailLevel: TLogMsgLevel;
+constructor TSimpleLogger.CreateWithAnyDest(ALoggerEnabled: boolean; ALogDetailLevel: TLogMsgLevel;
   ALogDestination: TLogDestinations);
 begin
   inherited Create;
@@ -98,7 +98,7 @@ end;
 constructor TSimpleLogger.Create(ALoggerEnabled: boolean; ALogDetailLevel: TLogMsgLevel;
   ALogDestination: TNonInstantiatableDestinations);
 begin
-  Create(ALoggerEnabled, ALogDetailLevel, ALogDestination);
+  CreateWithAnyDest(ALoggerEnabled, ALogDetailLevel, ALogDestination);
 end;
 
 constructor TSimpleLogger.Create(ALoggerEnabled: boolean; ALogDetailLevel: TLogMsgLevel;
