@@ -37,8 +37,10 @@ begin
   MemoDeviceInfo.Lines.Add(TDeviceInfo.ComputerName);
   MemoDeviceInfo.Lines.Add(TDeviceInfo.TimeZone);
   MemoDeviceInfo.Lines.Add(TDeviceInfo.HardwareProfile);
+  MemoDeviceInfo.Lines.Add(TDeviceInfo.HardDiskCSerialNumber);
 
 //  MemoDeviceInfo.Lines.Add(string.Join(sLineBreak, TDeviceInfo.InstalledUpdatesList));
+
   {
   if TDeviceInfo.ISHotFixID_Installed('KB890830') then
     MemoDeviceInfo.Lines.Add('true')

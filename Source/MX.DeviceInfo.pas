@@ -128,12 +128,18 @@ type
     /// of svchost bug)</b>
     /// </summary>
     class function ISHotFixID_Installed(const HotFixID: string): boolean;
+    /// <summary>
+    ///   Retrieves information about the volume associated with the specified
+    ///   root directory (C:).
+    /// </summary>
+    class function HardDiskCSerialNumber: string;
   end;
 
 implementation
 
 uses
-  System.SysUtils, System.DateUtils, System.TimeSpan, System.Math, System.Variants, System.Win.ComObj,
+  System.SysUtils, System.DateUtils, System.TimeSpan, System.Math, System.Variants,
+  System.Win.ComObj,
   Vcl.Forms, Winapi.ActiveX;
 
 { TDeviceInfo }
@@ -283,6 +289,18 @@ begin
   finally
     updateSession := Unassigned;
   end;
+end;
+
+class function TDeviceInfo.HardDiskCSerialNumber: string;
+var
+  NotUsed: DWORD;
+  VolumeFlags: DWORD;
+  VolumeInfo: array [0 .. MAX_PATH] of char;
+  VolumeSerialNumber: DWORD;
+begin
+  GetVolumeInformation(PChar('C:\'), nil, sizeof(VolumeInfo), @VolumeSerialNumber, NotUsed,
+    VolumeFlags, nil, 0);
+  Result := Format('VolSer = %8.8X', [VolumeSerialNumber]);
 end;
 
 class function TDeviceInfo.HardwareProfile: string;
