@@ -20,6 +20,7 @@ object FormMain: TFormMain
     Width = 521
     Height = 208
     Align = alClient
+    ScrollBars = ssVertical
     TabOrder = 0
   end
   object ButtonGetDeviceInfo: TButton

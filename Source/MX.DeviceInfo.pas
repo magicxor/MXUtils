@@ -7,6 +7,9 @@ uses
 
 type
   TDeviceInfo = class
+  strict private
+  const
+    C_MAX_POSSIBLE_UPDATES_COUNT = 10000;
   private
     class function InitMemoryStatus: TMemoryStatusEx;
   public
@@ -39,22 +42,19 @@ type
     /// <br />
     /// </summary>
     /// <example>
-    /// <para>
-    /// Example: <br />
-    /// </para>
-    /// <code lang="Delphi">Writeln(TOSVersion.ToString);</code>
-    /// <para>
-    /// Possible output: <br />
-    /// </para>
-    /// <code lang="Delphi">Windows XP Service Pack 3 (Version 5.1, Build 2600, 32-bit Edition)</code>
+    /// Possible output: <br /><code lang="Delphi">Windows XP Service Pack 3 (Version 5.1, Build 2600, 32-bit Edition)</code>
     /// </example>
     class function OSVersion: string;
     class function Resolution: string;
     /// <summary>
     /// An array containing the devices contexts strings. This is either a
-    /// descriptions of the display adapters or of the display monitors. <br />
+    /// descriptions of the display adapters or of the display monitors.
     /// </summary>
     class function DisplayNames: TArray<string>;
+    /// <summary>
+    /// An array containing the devices contexts strings. This is either a
+    /// descriptions of the display adapters or of the display monitors.
+    /// </summary>
     class function DisplayNamesStr: string;
     /// <summary>
     /// A number between 0 and 100 that specifies the approximate percentage
@@ -90,27 +90,51 @@ type
     /// </summary>
     class function MemoryAvailVirtual: DWORDLONG;
     /// <summary>
-    ///   Retrieves the name of the user associated with the current thread.
+    /// Retrieves the name of the user associated with the current thread.
     /// </summary>
     class function UserName: string;
     /// <summary>
-    ///   Retrieves the NetBIOS name of the local computer. This name is
-    ///   established at system startup, when the system reads it from the
-    ///   registry.
+    /// Retrieves the NetBIOS name of the local computer. This name is
+    /// established at system startup, when the system reads it from the
+    /// registry.
     /// </summary>
     class function ComputerName: string;
     /// <summary>
-    ///   Retrieves the current time zone and dynamic daylight saving time
-    ///   settings. These settings control the translations between Coordinated
-    ///   Universal Time (UTC) and local time.
+    /// Retrieves the current time zone and dynamic daylight saving time
+    /// settings. These settings control the translations between Coordinated
+    /// Universal Time (UTC) and local time.
     /// </summary>
     class function TimeZone: string;
+    /// <summary>
+    /// szHwProfileGuid <br /><br />The globally unique identifier (GUID)
+    /// string for the current hardware profile. The string returned by
+    /// GetCurrentHwProfile encloses the GUID in curly braces, {}; for
+    /// example: <br /><br />{12340001-4980-1920-6788-123456789012} <br /><br />
+    /// You can use this string as a registry subkey under your application's
+    /// configuration settings key in HKEY_CURRENT_USER. This enables you to
+    /// store settings for each hardware profile. <br />szHwProfileName <br /><br />
+    /// The display name for the current hardware profile.
+    /// </summary>
+    class function HardwareProfile: string;
+    /// <summary>
+    /// Performs a synchronous search for updates. <b>(FOR DEBUG ONLY: may be
+    /// VERY slow; your application may freeze until forever because of
+    /// svchost bug)</b>
+    /// </summary>
+    class function InstalledUpdatesList: TArray<string>;
+    /// <summary>
+    /// Performs a synchronous search for given update. <b>(FOR DEBUG ONLY:
+    /// may be VERY slow; your application may freeze until forever because
+    /// of svchost bug)</b>
+    /// </summary>
+    class function ISHotFixID_Installed(const HotFixID: string): boolean;
   end;
 
 implementation
 
 uses
-  System.SysUtils, Vcl.Forms, System.Math;
+  System.SysUtils, System.DateUtils, System.TimeSpan, System.Math, System.Variants, System.Win.ComObj,
+  Vcl.Forms, Winapi.ActiveX;
 
 { TDeviceInfo }
 
@@ -162,6 +186,121 @@ begin
   Result := string.Join('; ', DisplayNames);
 end;
 
+class function TDeviceInfo.InstalledUpdatesList: TArray<string>;
+var
+  updateSession: OleVariant;
+  updateSearcher: OleVariant;
+  updateSearchResult: OleVariant;
+  updateEntry: OleVariant;
+  UpdateCollection: OleVariant;
+  oEnum: IEnumvariant;
+  iValue: LongWord;
+  i: integer;
+begin
+  Result := [];
+  i := 0;
+  updateSession := CreateOleObject('Microsoft.Update.Session');
+  try
+    updateSearcher := updateSession.CreateUpdateSearcher;
+    try
+      // IUpdateSearcher::Search Method http://msdn.microsoft.com/en-us/library/aa386526%28v=VS.85%29.aspx
+      updateSearcher.online := False;
+      updateSearchResult := updateSearcher.Search(Format('IsInstalled = 1 and Type=%s',
+        [QuotedStr('Software')]));
+      try
+        UpdateCollection := updateSearchResult.Updates;
+        try
+          oEnum := IUnknown(UpdateCollection._NewEnum) as IEnumvariant;
+          // IUpdate Interface http://msdn.microsoft.com/en-us/library/aa386099%28v=VS.85%29.aspx
+          while (oEnum.Next(1, updateEntry, iValue) = 0) and (i <= C_MAX_POSSIBLE_UPDATES_COUNT) do
+          begin
+            Result := Result + [updateEntry.Title];
+            updateEntry := Unassigned;
+            Inc(i);
+          end;
+        finally
+          UpdateCollection := Unassigned;
+        end;
+      finally
+        updateSearchResult := Unassigned;
+      end;
+    finally
+      updateSearcher := Unassigned;
+    end;
+  finally
+    updateSession := Unassigned;
+  end;
+end;
+
+class function TDeviceInfo.ISHotFixID_Installed(const HotFixID: string): boolean;
+var
+  updateSession: OleVariant;
+  updateSearcher: OleVariant;
+  updateEntry: OleVariant;
+  updateSearchResult: OleVariant;
+  UpdateCollection: OleVariant;
+  oEnum: IEnumvariant;
+  iValue: LongWord;
+  LUpdEntryTitle: string;
+  i: integer;
+begin
+  Result := False;
+  i := 0;
+  updateSession := CreateOleObject('Microsoft.Update.Session');
+  try
+    updateSearcher := updateSession.CreateUpdateSearcher;
+    try
+      {
+        this line improves the performance, the online porperty indicates whether the UpdateSearcher
+        goes online to search for updates.
+        so how we are looking for already installed updates we can set this value to false
+      }
+      updateSearcher.online := False;
+      updateSearchResult := updateSearcher.Search(Format('IsInstalled = 1 and Type=%s',
+        [QuotedStr('Software')]));
+      try
+        UpdateCollection := updateSearchResult.Updates;
+        try
+          oEnum := IUnknown(UpdateCollection._NewEnum) as IEnumvariant;
+          while (oEnum.Next(1, updateEntry, iValue) = 0) and (i <= C_MAX_POSSIBLE_UPDATES_COUNT) do
+          begin
+            LUpdEntryTitle := updateEntry.Title;
+            Result := LUpdEntryTitle.Contains(HotFixID);
+            updateEntry := Unassigned;
+            if Result then
+              break;
+            Inc(i);
+          end;
+        finally
+          UpdateCollection := Unassigned;
+        end;
+      finally
+        updateSearchResult := Unassigned;
+      end;
+    finally
+      updateSearcher := Unassigned;
+    end;
+  finally
+    updateSession := Unassigned;
+  end;
+end;
+
+class function TDeviceInfo.HardwareProfile: string;
+var
+  LHWProfile: THWProfileInfo;
+  SB: TStringBuilder;
+begin
+  FillChar(LHWProfile, sizeof(THWProfileInfo), 0);
+  GetCurrentHwProfile(LHWProfile);
+  SB := TStringBuilder.Create;
+  try
+    Result := SB.Append(LHWProfile.szHwProfileGuid).Append(' ')
+      .Append(LHWProfile.szHwProfileName).ToString;
+  finally
+    FreeAndNil(SB);
+  end;
+end;
+
 class function TDeviceInfo.InitMemoryStatus: TMemoryStatusEx;
 var
   LMemoryStatusEx: TMemoryStatusEx;
@@ -208,28 +347,8 @@ begin
 end;
 
 class function TDeviceInfo.TimeZone: string;
-var
-  TZ: TTimeZoneInformation;
-  DTZ: TDynamicTimeZoneInformation;
-  SB: TStringBuilder;
 begin
-  SB := TStringBuilder.Create;
-  try
-    if TOSVersion.Major >= 6 then
-    begin
-      GetDynamicTimeZoneInformation(DTZ);
-      Result := SB.Append('Standard: ').Append(DTZ.StandardName).Append(' Daylight: ')
-        .Append(DTZ.DaylightName).Append(' KeyName: ').Append(DTZ.TimeZoneKeyName).ToString;
-    end
-    else
-    begin
-      GetTimeZoneInformation(TZ);
-      Result := SB.Append('Standard: ').Append(TZ.StandardName).Append(' Daylight: ')
-        .Append(TZ.DaylightName).ToString;
-    end;
-  finally
-    FreeAndNil(SB);
-  end;
+  Result := string.Join('; ', [TTimeZone.Local.Abbreviation, TTimeZone.Local.DisplayName]);
 end;
 
 class function TDeviceInfo.UserName: string;
