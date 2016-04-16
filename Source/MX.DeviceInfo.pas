@@ -298,6 +298,8 @@ var
   VolumeInfo: array [0 .. MAX_PATH] of char;
   VolumeSerialNumber: DWORD;
 begin
+// todo: add argument "driveLetter";
+// todo: add function that retrieves all availiable drives
   GetVolumeInformation(PChar('C:\'), nil, sizeof(VolumeInfo), @VolumeSerialNumber, NotUsed,
     VolumeFlags, nil, 0);
   Result := Format('VolSer = %8.8X', [VolumeSerialNumber]);
