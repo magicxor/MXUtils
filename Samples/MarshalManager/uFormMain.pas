@@ -5,13 +5,12 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, System.Generics.Collections,
-  MX.SimpleLogger, MX.MarshalManager;
+  MX.MarshalManager;
 
 type
   TFormMain = class(TForm)
     EditOriginal: TEdit;
     ButtonMarshalUnmarshalTBytes: TButton;
-    MemoLogOutput: TMemo;
     EditMarshaled: TEdit;
     ButtonMarshalUnmarshalString: TButton;
     ButtonMarshalUnmarshalJSONVal: TButton;
@@ -20,7 +19,6 @@ type
     procedure ButtonMarshalUnmarshalStringClick(Sender: TObject);
     procedure ButtonMarshalUnmarshalJSONValClick(Sender: TObject);
   private
-    FLogger: ILogger;
     FMarshalManager: IMarshalManager;
     FUnmarshalManager: IUnmarshalManager<TList<string>>;
   public
@@ -112,9 +110,8 @@ end;
 
 procedure TFormMain.FormCreate(Sender: TObject);
 begin
-  FLogger := TSimpleLogger.Create(True, lmlDebug, MemoLogOutput.Lines);
-  FMarshalManager := TMarshalManager.Create(FLogger);
-  FUnmarshalManager := TUnmarshalManager < TList < string >>.Create(FLogger);
+  FMarshalManager := TMarshalManager.Create;
+  FUnmarshalManager := TUnmarshalManager<TList<string>>.Create;
 end;
 
 end.

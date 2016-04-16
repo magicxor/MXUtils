@@ -2,7 +2,7 @@ object FormMain: TFormMain
   Left = 0
   Top = 0
   Caption = 'FormMain'
-  ClientHeight = 163
+  ClientHeight = 65
   ClientWidth = 298
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -35,14 +35,5 @@ object FormMain: TFormMain
     Caption = 'Run notepad.exe and wait'
     TabOrder = 1
     OnClick = ButtonRunTheNotepadClick
-  end
-  object MemoLogOutput: TMemo
-    AlignWithMargins = True
-    Left = 3
-    Top = 65
-    Width = 292
-    Height = 95
-    Align = alClient
-    TabOrder = 2
   end
 end

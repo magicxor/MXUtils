@@ -4,18 +4,16 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, MX.SimpleLogger, MX.ExeRunner;
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, MX.ExeRunner;
 
 type
   TFormMain = class(TForm)
     ButtonRunTheCalculator: TButton;
     ButtonRunTheNotepad: TButton;
-    MemoLogOutput: TMemo;
     procedure FormCreate(Sender: TObject);
     procedure ButtonRunTheCalculatorClick(Sender: TObject);
     procedure ButtonRunTheNotepadClick(Sender: TObject);
   private
-    FLogger: ILogger;
     FExeRunner: IExeRunner;
   public
     { Public declarations }
@@ -40,8 +38,7 @@ end;
 
 procedure TFormMain.FormCreate(Sender: TObject);
 begin
-  FLogger := TSimpleLogger.Create(True, lmlDebug, MemoLogOutput.Lines);
-  FExeRunner := TExeRunner.Create(FLogger);
+  FExeRunner := TExeRunner.Create;
 end;
 
 end.

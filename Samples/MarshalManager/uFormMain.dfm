@@ -2,7 +2,7 @@ object FormMain: TFormMain
   Left = 0
   Top = 0
   Caption = 'MarshalManagerSample'
-  ClientHeight = 452
+  ClientHeight = 150
   ClientWidth = 527
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -35,17 +35,6 @@ object FormMain: TFormMain
     TabOrder = 1
     OnClick = ButtonMarshalUnmarshalTBytesClick
   end
-  object MemoLogOutput: TMemo
-    AlignWithMargins = True
-    Left = 3
-    Top = 150
-    Width = 521
-    Height = 299
-    Align = alClient
-    TabOrder = 2
-    ExplicitTop = 88
-    ExplicitHeight = 141
-  end
   object EditMarshaled: TEdit
     AlignWithMargins = True
     Left = 3
@@ -53,8 +42,7 @@ object FormMain: TFormMain
     Width = 521
     Height = 21
     Align = alTop
-    TabOrder = 3
-    ExplicitTop = 61
+    TabOrder = 2
   end
   object ButtonMarshalUnmarshalString: TButton
     AlignWithMargins = True
@@ -64,10 +52,8 @@ object FormMain: TFormMain
     Height = 25
     Align = alTop
     Caption = 'Marshal and unmarshal (string)'
-    TabOrder = 4
+    TabOrder = 3
     OnClick = ButtonMarshalUnmarshalStringClick
-    ExplicitLeft = 6
-    ExplicitTop = 38
   end
   object ButtonMarshalUnmarshalJSONVal: TButton
     AlignWithMargins = True
@@ -77,9 +63,7 @@ object FormMain: TFormMain
     Height = 25
     Align = alTop
     Caption = 'Marshal and unmarshal (TJSONValue)'
-    TabOrder = 5
+    TabOrder = 4
     OnClick = ButtonMarshalUnmarshalJSONValClick
-    ExplicitLeft = 6
-    ExplicitTop = 69
   end
 end

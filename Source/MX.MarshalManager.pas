@@ -2,7 +2,7 @@
 
 interface
 
-uses System.SysUtils, System.JSON, {$INCLUDE LoggerImpl.inc};
+uses System.SysUtils, System.JSON;
 
 type
   IUnmarshalManager<T: class> = interface
@@ -14,15 +14,11 @@ type
   end;
 
   TUnmarshalManager<T: class> = class(TInterfacedObject, IUnmarshalManager<T>)
-  private
-    FLogger: ILogger;
   public
     function UnMarshalFromJSONValue(AJSONValue: TJSONValue): T;
     function UnMarshalFromJSONBytes(AJSONBytes: TBytes): T;
     function UnMarshalFromJSONString(AJSONString: string): T;
     function UnMarshalFromJSONFile(AJSONFilePath: string): T;
-
-    constructor Create(ALogger: ILogger);
   end;
 
   IMarshalManager = interface
@@ -34,15 +30,11 @@ type
   end;
 
   TMarshalManager = class(TInterfacedObject, IMarshalManager)
-  private
-    FLogger: ILogger;
   public
     function MarshalToJSONValue(AObject: TObject): TJSONValue;
     function MarshalToJSONBytes(AObject: TObject): TBytes;
     function MarshalToJSONString(AObject: TObject): string;
     procedure MarshalToJSONFile(AObject: TObject; AFilePath: string);
-
-    constructor Create(ALogger: ILogger);
   end;
 
 implementation
@@ -50,11 +42,6 @@ implementation
 uses Data.DBXJSONReflect, System.IOUtils, System.Classes;
 
 { TUnmarshalManager<T> }
-
-constructor TUnmarshalManager<T>.Create(ALogger: ILogger);
-begin
-  FLogger := ALogger;
-end;
 
 function TUnmarshalManager<T>.UnMarshalFromJSONBytes(AJSONBytes: TBytes): T;
 var
@@ -93,17 +80,6 @@ begin
   Unmarshaller := TJSONUnMarshal.Create;
   try
     Result := Unmarshaller.UnMarshal(AJSONValue) as T;
-    if Unmarshaller.HasWarnings then
-    begin
-      FLogger.Warn('Unmarshaller has ' + Length(Unmarshaller.Warnings).ToString + ' warnings:');
-      for LWarning in Unmarshaller.Warnings do
-        FLogger.Warn('ClassUnitName: ' + LWarning.ClassUnitName + // unit name for the fields class
-          'ClassTypeName: ' + LWarning.ClassTypeName + // class name for the fields class
-          'UnitName: ' + LWarning.UnitName + // unit name for the field type
-          'TypeName: ' + LWarning.TypeName + // class name for the field type
-          'FieldName: ' + LWarning.FieldName); // fields name.
-    end;
-    FLogger.Debug('Unmarshal operation successfully completed');
   finally
     FreeAndNil(Unmarshaller);
   end;
@@ -111,34 +87,19 @@ end;
 
 { TMarshalManager }
 
-constructor TMarshalManager.Create(ALogger: ILogger);
-begin
-  FLogger := ALogger;
-end;
-
 function TMarshalManager.MarshalToJSONValue(AObject: TObject): TJSONValue;
 var
   Marshaller: TJSONMarshal;
-  ErrorOccurs: boolean;
 begin
   Result := nil;
-  ErrorOccurs := False;
   Marshaller := TJSONMarshal.Create;
   try
     if Assigned(AObject) then
     begin
-      try
-        Result := Marshaller.Marshal(AObject);
-      except
-        ErrorOccurs := True;
-      end;
-      if ErrorOccurs then
-        FLogger.Error('Marshal operation failed')
-      else
-        FLogger.Debug('Marshal operation successfully completed');
+      Result := Marshaller.Marshal(AObject);
     end
     else
-      FLogger.Error('Can''t marshal the nil value');
+      raise Exception.Create('Can''t marshal the nil value');
   finally
     FreeAndNil(Marshaller);
   end;

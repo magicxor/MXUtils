@@ -2,7 +2,7 @@ unit MX.ExeRunner;
 
 interface
 
-uses System.SysUtils, {$INCLUDE LoggerImpl.inc};
+uses System.SysUtils;
 
 type
   IExeRunner = interface
@@ -16,12 +16,10 @@ type
   const
     C_POLL_INTERVAL = 100;
   private
-    FLogger: ILogger;
     procedure DoRun(ADoWait: boolean; AFilePath: string; AParameters: string);
   public
     procedure RunAndWait(AFilePath: string; AParameters: string = string.Empty);
     procedure Run(AFilePath: string; AParameters: string = string.Empty);
-    constructor Create(ALogger: ILogger);
   end;
 
 implementation
@@ -29,13 +27,6 @@ implementation
 uses Winapi.ShellApi, Winapi.Windows;
 
 { TExeRunner }
-
-constructor TExeRunner.Create(ALogger: ILogger);
-begin
-  inherited Create;
-
-  FLogger := ALogger;
-end;
 
 procedure TExeRunner.DoRun(ADoWait: boolean; AFilePath, AParameters: string);
 var
@@ -56,19 +47,17 @@ begin
   SEInfo.nShow := SW_SHOWNORMAL;
   if ShellExecuteEx(@SEInfo) then
   begin
-    FLogger.Info('The process was started: "' + AFilePath + '" ' + AParameters);
     if ADoWait then
     begin
       repeat
         sleep(C_POLL_INTERVAL);
         GetExitCodeProcess(SEInfo.hProcess, ExitCode);
       until (ExitCode <> STILL_ACTIVE);
-      FLogger.Info('The process was finished: "' + AFilePath + '" ' + AParameters);
     end;
   end
   else
   begin
-    FLogger.Error('Can''t run: ' + SysErrorMessage(GetLastError));
+    raise Exception.Create(SysErrorMessage(GetLastError));
   end;
 end;
 
